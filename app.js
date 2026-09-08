@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   await loadExams();
   initGoogleAuth();
+  initSearchableCombobox();
   checkAuth();
   setupEventListeners();
   render();
@@ -396,10 +397,16 @@ function setupEventListeners() {
     document.getElementById("form-add-exam").reset();
     document.getElementById("edit-exam-id").value = "";
     document.getElementById("modal-title").textContent = "Adicionar Novo Exame";
+    const menu = document.getElementById("combobox-menu");
+    if (menu) menu.style.display = "none";
     modal.classList.add("open");
   });
 
-  document.getElementById("btn-close-modal")?.addEventListener("click", () => modal.classList.remove("open"));
+  document.getElementById("btn-close-modal")?.addEventListener("click", () => {
+    modal.classList.remove("open");
+    const menu = document.getElementById("combobox-menu");
+    if (menu) menu.style.display = "none";
+  });
 
   // Formulário de Adicionar/Editar Exame
   document.getElementById("form-add-exam")?.addEventListener("submit", (e) => {
@@ -693,7 +700,9 @@ function openEditExamModal(id) {
   document.getElementById("edit-exam-id").value = ex.id;
   document.getElementById("modal-title").textContent = "Editar Exame";
   document.getElementById("inp-titulo").value = ex.titulo;
-  document.getElementById("inp-tipo").value = ex.tipo || "Laboratorial";
+  document.getElementById("inp-tipo").value = ex.tipo || "";
+  const menu = document.getElementById("combobox-menu");
+  if (menu) menu.style.display = "none";
   document.getElementById("inp-para").value = ex.para || "ambos";
   document.getElementById("inp-data").value = ex.data || "";
   document.getElementById("inp-horario").value = ex.horario || "";
@@ -709,7 +718,7 @@ function openEditExamModal(id) {
 function handleAddOrEditExam() {
   const editId = document.getElementById("edit-exam-id").value;
   const titulo = document.getElementById("inp-titulo").value.trim();
-  const tipo = document.getElementById("inp-tipo").value;
+  const tipo = document.getElementById("inp-tipo").value.trim() || "Exame Geral";
   const para = document.getElementById("inp-para").value;
   const data = document.getElementById("inp-data").value;
   const horario = document.getElementById("inp-horario").value;
@@ -795,4 +804,243 @@ function formatDateBr(isoDate) {
 
 function formatTime(dateObj) {
   return dateObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+// Catálogo Completo de Procedimentos Médicos e Odontológicos
+const EXAM_CATALOG = [
+  {
+    category: "🦷 Odontologia e Dentistas",
+    items: [
+      "🦷 Check-up Odontológico / Avaliação Geral",
+      "🦷 Limpeza, Profilaxia e Remoção de Tártaro",
+      "🦷 Aplicação Tópica de Flúor / Remoção de Manchas",
+      "🦷 Restauração / Obturação Dentária (Resina)",
+      "🦷 Tratamento de Canal (Endodontia)",
+      "🦷 Extração Dentária / Cirurgia de Siso",
+      "🦷 Radiografia Panorâmica / Raio-X Odontológico",
+      "🦷 Documentação Ortodôntica / Moldagem",
+      "🦷 Manutenção ou Instalação de Aparelho Ortodôntico",
+      "🦷 Clareamento Dental (Consultório ou Caseiro)",
+      "🦷 Placa de Bruxismo / DTM (Miorrelaxante)",
+      "🦷 Implante Dentário / Prótese Fixa",
+      "🦷 Periodontia (Tratamento e Raspagem de Gengiva)",
+      "🦷 Facetas / Lentes de Contato Dental"
+    ]
+  },
+  {
+    category: "🩸 Sangue e Laboratoriais",
+    items: [
+      "🩸 Hemograma Completo com Plaquetas",
+      "🩸 Glicemia em Jejum e Insulina Basal",
+      "🩸 Hemoglobina Glicada (HbA1c)",
+      "🩸 Perfil Lipídico (Colesterol Total, HDL, LDL, VLDL, Triglicérides)",
+      "🧪 Função Hepática (TGO, TGP, Gama-GT, Bilirrubinas)",
+      "🧪 Função Renal (Ureia e Creatinina com TFG)",
+      "🧪 Tireoide Completo (TSH Ultra e T4 Livre)",
+      "🧪 Vitaminas (Vitamina D 25-OH, Vitamina B12, Ácido Fólico)",
+      "🧪 Ferro Sérico, Ferritina e Capacidade de Ligação",
+      "🧪 Eletrólitos (Sódio, Potássio, Cálcio, Magnésio)",
+      "🧪 Ácido Úrico Sérico",
+      "🧪 Coagulograma Completo (TP / TTPA / Fibrinogênio)",
+      "🧪 Sorologias (HIV, Sífilis / VDRL, Hepatites B e C)",
+      "🧪 Proteína C Reativa Ultrassensível (PCR / Inflamação)",
+      "🧪 Velocidade de Hemossedimentação (VHS)",
+      "🧴 Exame de Urina Tipo 1 (EAS / Sedimentoscopia)",
+      "🧴 Urocultura com Antibiograma (TSA)",
+      "💩 Parasitológico de Fezes (EPF) / Sangue Oculto"
+    ]
+  },
+  {
+    category: "🖼️ Diagnóstico por Imagem",
+    items: [
+      "🖼️ Ultrassom Abdominal Total",
+      "🖼️ Ultrassom da Tireoide com Doppler",
+      "🖼️ Ultrassom Pélvico / Transvaginal",
+      "🖼️ Ultrassom das Mamas",
+      "🖼️ Ultrassom de Rins e Vias Urinárias",
+      "🖼️ Raio-X de Tórax (PA e Perfil)",
+      "🖼️ Tomografia Computadorizada (TC)",
+      "🖼️ Ressonância Magnética (RM)",
+      "🖼️ Densitometria Óssea",
+      "🖼️ Mamografia Digital"
+    ]
+  },
+  {
+    category: "❤️ Cardiologia e Circulação",
+    items: [
+      "❤️ Eletrocardiograma de Repouso (ECG)",
+      "❤️ Ecocardiograma Transtorácico com Doppler",
+      "❤️ Teste Ergométrico em Esteira (Ergometria)",
+      "❤️ MAPA 24 Horas (Pressão Arterial)",
+      "❤️ Holter 24 Horas (Ritmo Cardíaco)",
+      "❤️ Ultrassom Doppler Colorido de Carótidas e Vertebrais"
+    ]
+  },
+  {
+    category: "🌸 Saúde da Mulher",
+    items: [
+      "🌸 Papanicolau / Citologia Oncótica Preventiva",
+      "🌸 Colposcopia / Vulvoscopia",
+      "🌸 Painel Hormonal Feminino (Estradiol, Progesterona, FSH, LH, Prolactina)"
+    ]
+  },
+  {
+    category: "👨 Saúde do Homem",
+    items: [
+      "👨 PSA Total e Livre (Próstata)",
+      "👨 Testosterona Total, Livre e SHBG",
+      "👨 Ultrassom da Próstata / Aparelho Urinário"
+    ]
+  },
+  {
+    category: "🍽️ Digestivo, Respiratório e Outros",
+    items: [
+      "🍽️ Endoscopia Digestiva Alta com H. Pylori",
+      "🍽️ Colonoscopia com Biópsia",
+      "🫁 Espirometria / Prova de Função Pulmonar",
+      "👁️ Exame Oftalmológico Completo",
+      "👂 Audiometria Tonal e Vocal",
+      "🩺 Consulta Médica / Retorno",
+      "🩹 Outro (Personalizado)"
+    ]
+  }
+];
+
+// Inicialização do Combobox Autocomplete / Pesquisável
+function initSearchableCombobox() {
+  const input = document.getElementById("inp-tipo");
+  const menu = document.getElementById("combobox-menu");
+  const toggleBtn = document.getElementById("btn-toggle-combobox");
+
+  if (!input || !menu) return;
+
+  function normalize(str) {
+    return (str || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function renderMenu(searchTerm = "") {
+    menu.innerHTML = "";
+    const cleanSearch = normalize(searchTerm);
+    let hasAnyMatch = false;
+
+    EXAM_CATALOG.forEach(group => {
+      const matchingItems = group.items.filter(item => {
+        if (!cleanSearch) return true;
+        return normalize(item).includes(cleanSearch) || normalize(group.category).includes(cleanSearch);
+      });
+
+      if (matchingItems.length > 0) {
+        hasAnyMatch = true;
+        const groupTitle = document.createElement("div");
+        groupTitle.className = "combobox-group-title";
+        groupTitle.textContent = group.category;
+        menu.appendChild(groupTitle);
+
+        matchingItems.forEach(itemText => {
+          const itemEl = document.createElement("div");
+          itemEl.className = "combobox-item";
+          itemEl.textContent = itemText;
+          itemEl.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            input.value = itemText;
+            menu.style.display = "none";
+          });
+          menu.appendChild(itemEl);
+        });
+      }
+    });
+
+    if (!hasAnyMatch && cleanSearch) {
+      const customEl = document.createElement("div");
+      customEl.className = "combobox-item";
+      customEl.style.fontStyle = "italic";
+      customEl.style.color = "var(--text-muted)";
+      customEl.textContent = `✨ Usar "${searchTerm}" como procedimento personalizado`;
+      customEl.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = searchTerm;
+        menu.style.display = "none";
+      });
+      menu.appendChild(customEl);
+    }
+
+    menu.style.display = "block";
+  }
+
+  // Filtragem dinâmica na digitação
+  input.addEventListener("input", () => {
+    renderMenu(input.value);
+  });
+
+  // Abertura no foco
+  input.addEventListener("focus", () => {
+    renderMenu(input.value);
+  });
+
+  // Botão seta (▾) para abrir/fechar lista completa
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (menu.style.display === "block") {
+        menu.style.display = "none";
+      } else {
+        renderMenu("");
+        input.focus();
+      }
+    });
+  }
+
+  // Navegação por teclado (Cima, Baixo, Enter, Esc)
+  input.addEventListener("keydown", (e) => {
+    const items = menu.querySelectorAll(".combobox-item");
+    if (!items.length || menu.style.display === "none") {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        renderMenu(input.value);
+      }
+      return;
+    }
+
+    let activeIndex = -1;
+    items.forEach((it, idx) => {
+      if (it.classList.contains("active")) activeIndex = idx;
+    });
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = (activeIndex + 1) % items.length;
+      items.forEach(it => it.classList.remove("active"));
+      items[nextIndex].classList.add("active");
+      items[nextIndex].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = (activeIndex - 1 + items.length) % items.length;
+      items.forEach(it => it.classList.remove("active"));
+      items[prevIndex].classList.add("active");
+      items[prevIndex].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && items[activeIndex]) {
+        e.preventDefault();
+        const text = items[activeIndex].textContent;
+        const customMatch = text.match(/^✨ Usar "(.+)" como procedimento personalizado$/);
+        input.value = customMatch ? customMatch[1] : text;
+        menu.style.display = "none";
+      } else {
+        menu.style.display = "none";
+      }
+    } else if (e.key === "Escape") {
+      menu.style.display = "none";
+    }
+  });
+
+  // Fechar menu ao clicar em qualquer outra parte da página
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !menu.contains(e.target) && (!toggleBtn || !toggleBtn.contains(e.target))) {
+      menu.style.display = "none";
+    }
+  });
 }
