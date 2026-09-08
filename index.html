@@ -132,15 +132,71 @@
         </div>
 
         <div class="form-group">
-          <label for="inp-tipo">Tipo de Exame</label>
+          <label for="inp-tipo">Tipo / Categoria de Exame *</label>
           <select id="inp-tipo">
-            <option value="Laboratorial">🧪 Laboratorial (Sangue, Urina, Fezes)</option>
-            <option value="Imagem">🖼️ Imagem (Ultrassom, Raio-X, Tomografia, Ressonância)</option>
-            <option value="Cardiológico">❤️ Cardiológico (ECG, Holter, MAPA, Teste de Esforço)</option>
-            <option value="Consulta">🩺 Consulta / Retorno Médico</option>
-            <option value="Ginecológico">🌸 Ginecológico / Preventivo</option>
-            <option value="Oftalmológico">👁️ Oftalmológico</option>
-            <option value="Outro">🩹 Outro tipo</option>
+            <optgroup label="🩸 Sangue e Laboratoriais">
+              <option value="Hemograma Completo">🩸 Hemograma Completo</option>
+              <option value="Glicemia e Insulina">🩸 Glicemia em Jejum e Insulina</option>
+              <option value="Hemoglobina Glicada">🩸 Hemoglobina Glicada (HbA1c)</option>
+              <option value="Perfil Lipídico">🩸 Perfil Lipídico (Colesterol e Triglicérides)</option>
+              <option value="Função Hepática">🧪 Função Hepática (TGO, TGP, Gama GT, Bilirrubinas)</option>
+              <option value="Função Renal">🧪 Função Renal (Ureia e Creatinina)</option>
+              <option value="Tireoide (TSH e T4L)">🧪 Tireoide (TSH e T4 Livre)</option>
+              <option value="Vitaminas (D e B12)">🧪 Vitaminas (Vitamina D, B12, Ácido Fólico)</option>
+              <option value="Ferro e Ferritina">🧪 Ferro Sérico e Ferritina</option>
+              <option value="Eletrólitos">🧪 Eletrólitos (Sódio, Potássio, Cálcio, Magnésio)</option>
+              <option value="Ácido Úrico">🧪 Ácido Úrico</option>
+              <option value="Coagulograma">🧪 Coagulograma (Tempo de Protrombina / TTPA)</option>
+              <option value="Sorologias e DSTs">🧪 Sorologias (HIV, Sífilis, Hepatites B e C)</option>
+              <option value="Proteína C Reativa">🧪 Proteína C Reativa (PCR / Inflamação)</option>
+              <option value="Exame de Urina (EAS)">🧴 Urina Tipo 1 (EAS / Sedimentoscopia)</option>
+              <option value="Urocultura">🧴 Urocultura com Antibiograma</option>
+              <option value="Parasitológico de Fezes">💩 Parasitológico de Fezes (EPF) / Sangue Oculto</option>
+            </optgroup>
+
+            <optgroup label="🖼️ Diagnóstico por Imagem">
+              <option value="Ultrassom Abdominal Total">🖼️ Ultrassom Abdominal Total</option>
+              <option value="Ultrassom da Tireoide">🖼️ Ultrassom da Tireoide</option>
+              <option value="Ultrassom Pélvico / Transvaginal">🖼️ Ultrassom Pélvico / Transvaginal</option>
+              <option value="Ultrassom das Mamas">🖼️ Ultrassom das Mamas</option>
+              <option value="Ultrassom de Vias Urinárias">🖼️ Ultrassom de Rins e Vias Urinárias</option>
+              <option value="Raio-X de Tórax">🖼️ Raio-X de Tórax</option>
+              <option value="Tomografia Computadorizada">🖼️ Tomografia Computadorizada (TC)</option>
+              <option value="Ressonância Magnética">🖼️ Ressonância Magnética (RM)</option>
+              <option value="Densitometria Óssea">🖼️ Densitometria Óssea</option>
+              <option value="Mamografia Digital">🖼️ Mamografia Digital</option>
+            </optgroup>
+
+            <optgroup label="❤️ Cardiologia e Circulação">
+              <option value="Eletrocardiograma (ECG)">❤️ Eletrocardiograma (ECG)</option>
+              <option value="Ecocardiograma com Doppler">❤️ Ecocardiograma com Doppler</option>
+              <option value="Teste Ergométrico">❤️ Teste Ergométrico (Esteira)</option>
+              <option value="MAPA 24 Horas">❤️ MAPA 24 Horas (Pressão Arterial)</option>
+              <option value="Holter 24 Horas">❤️ Holter 24 Horas (Ritmo Cardíaco)</option>
+              <option value="Doppler de Carótidas">❤️ Doppler de Carótidas e Vertebrais</option>
+            </optgroup>
+
+            <optgroup label="🌸 Saúde da Mulher">
+              <option value="Papanicolau">🌸 Papanicolau / Preventivo Ginecológico</option>
+              <option value="Colposcopia / Vulvoscopia">🌸 Colposcopia / Vulvoscopia</option>
+              <option value="Painel Hormonal Feminino">🌸 Dosagem Hormonal (Estradiol, Progesterona, FSH, LH)</option>
+            </optgroup>
+
+            <optgroup label="👨 Saúde do Homem">
+              <option value="PSA Total e Livre">👨 PSA Total e Livre (Próstata)</option>
+              <option value="Testosterona Total e Livre">👨 Testosterona Total e Livre</option>
+              <option value="Ultrassom da Próstata">👨 Ultrassom da Próstata / Aparelho Urinário</option>
+            </optgroup>
+
+            <optgroup label="🍽️ Digestivo, Respiratório e Outros">
+              <option value="Endoscopia Digestiva">🍽️ Endoscopia Digestiva Alta</option>
+              <option value="Colonoscopia">🍽️ Colonoscopia</option>
+              <option value="Espirometria">🫁 Espirometria / Função Pulmonar</option>
+              <option value="Exame Oftalmológico">👁️ Exame Oftalmológico Completo</option>
+              <option value="Audiometria">👂 Audiometria</option>
+              <option value="Consulta / Retorno">🩺 Consulta Médica / Retorno</option>
+              <option value="Outro">🩹 Outro (Personalizado)</option>
+            </optgroup>
           </select>
         </div>
 
