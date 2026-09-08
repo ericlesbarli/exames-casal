@@ -47,30 +47,42 @@ function checkAuth() {
 }
 
 // Inicializa o Google Identity Services
+// Mapeamento e Validação de Usuários Autorizados
+function getUserFromEmail(email) {
+  const cleanEmail = (email || "").toLowerCase().trim();
+  if (cleanEmail === "rebecacoelho09@gmail.com") return "Rebeca";
+  if (cleanEmail === "ericlesbarli@gmail.com") return "Ericles";
+  
+  // Verifica também lista dinâmica se houver
+  const dynamicMap = (examsData.casal && examsData.casal.usuarios) || {};
+  if (dynamicMap[cleanEmail]) return dynamicMap[cleanEmail];
+  
+  return null;
+}
+
+// Inicializa o Google Identity Services
 function initGoogleAuth() {
   const clientId = (examsData.casal && examsData.casal.googleClientId) || "";
   const container = document.getElementById("g_id_signin");
   if (!container) return;
 
   if (!clientId) {
-    // Botão amigável com suporte a teste direto com os e-mails autorizados
+    // Botão amigável com autenticação direta para os e-mails autorizados
     container.innerHTML = `
-      <button type="button" id="btn-google-setup" style="display: inline-flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--border); color: #374151; font-weight: 600; padding: 10px 18px; border-radius: 9999px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; justify-content: center;">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-        <span>Continuar com Google (Gmail)</span>
+      <button type="button" id="btn-google-setup" style="display: inline-flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--border); color: #374151; font-weight: 600; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 2px 5px rgba(0,0,0,0.08); width: 100%; justify-content: center; transition: all 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        <span>Entrar com Conta Google (Gmail)</span>
       </button>
     `;
 
     document.getElementById("btn-google-setup")?.addEventListener("click", () => {
-      const emailInput = prompt("Confirme o seu e-mail do Gmail para autenticar:", "ericlesbarli@gmail.com");
+      const emailInput = prompt("Digite ou confirme o seu e-mail do Gmail cadastrado:", "");
       if (!emailInput) return;
 
       const email = emailInput.trim().toLowerCase();
-      const authorized = (examsData.casal && examsData.casal.emailsAutorizados || []).map(e => e.toLowerCase());
+      const userName = getUserFromEmail(email);
 
-      if (authorized.includes(email) || email === "ericlesbarli@gmail.com") {
-        const isRebeca = email.includes("rebeca");
-        const userName = isRebeca ? "Rebeca" : "Ericles";
+      if (userName) {
         const authData = {
           user: userName,
           email: email,
@@ -85,7 +97,7 @@ function initGoogleAuth() {
       } else {
         const errorBox = document.getElementById("login-error");
         if (errorBox) {
-          errorBox.textContent = `Acesso negado para "${email}". Apenas e-mails autorizados podem entrar.`;
+          errorBox.textContent = `Acesso negado para "${email}". Apenas ericlesbarli@gmail.com e rebecacoelho09@gmail.com podem entrar.`;
           errorBox.style.display = "block";
         }
       }
@@ -93,7 +105,7 @@ function initGoogleAuth() {
     return;
   }
 
-  // Se tiver Client ID, inicializa o widget oficial do Google
+  // Se tiver Client ID configurado, inicializa o widget oficial do Google
   const interval = setInterval(() => {
     if (window.google && window.google.accounts && window.google.accounts.id) {
       clearInterval(interval);
@@ -119,21 +131,18 @@ function initGoogleAuth() {
   }, 300);
 }
 
-// Resposta do Google
+// Resposta do Google OAuth
 function handleGoogleCredentialResponse(response) {
   try {
     const payload = parseJwt(response.credential);
-    const email = (payload.email || "").toLowerCase();
-    const authorized = (examsData.casal && examsData.casal.emailsAutorizados || [])
-      .map(e => e.toLowerCase());
+    const email = (payload.email || "").toLowerCase().trim();
+    const userName = getUserFromEmail(email);
 
-    const isAuthorized = authorized.length === 0 || authorized.includes(email);
-
-    if (isAuthorized) {
+    if (userName) {
       const authData = {
-        user: payload.given_name || payload.name || "Casal",
-        email: payload.email,
-        picture: payload.picture || "",
+        user: userName,
+        email: email,
+        picture: payload.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${userName}&backgroundColor=0284c7`,
         type: "google",
         loggedAt: Date.now()
       };
@@ -144,7 +153,7 @@ function handleGoogleCredentialResponse(response) {
     } else {
       const errorBox = document.getElementById("login-error");
       if (errorBox) {
-        errorBox.textContent = `Acesso negado para ${payload.email}. Apenas Ericles e Rebeca podem entrar.`;
+        errorBox.textContent = `Acesso negado para ${email}. Apenas Ericles e Rebeca podem entrar.`;
         errorBox.style.display = "block";
       }
     }
@@ -163,41 +172,10 @@ function parseJwt(token) {
   return JSON.parse(jsonPayload);
 }
 
-function handleLogin(e) {
-  e.preventDefault();
-  const user = document.getElementById("login-user").value;
-  const pass = document.getElementById("login-pass").value.trim();
-  const remember = document.getElementById("login-remember").checked;
-  const errorBox = document.getElementById("login-error");
-
-  const correctPass = (examsData.casal && examsData.casal.senha) || "casal2026";
-
-  if (pass === correctPass) {
-    const authData = { user, type: "password", loggedAt: Date.now() };
-    if (remember) {
-      localStorage.setItem("exames_auth", JSON.stringify(authData));
-    } else {
-      sessionStorage.setItem("exames_auth", JSON.stringify(authData));
-    }
-
-    if (errorBox) errorBox.style.display = "none";
-    document.getElementById("login-overlay").style.display = "none";
-    checkAuth();
-    render();
-  } else {
-    if (errorBox) {
-      errorBox.textContent = "⚠️ Senha incorreta. Tente novamente!";
-      errorBox.style.display = "block";
-    }
-    document.getElementById("login-pass").focus();
-  }
-}
-
 function handleLogout() {
-  if (confirm("Deseja bloquear o acesso e voltar para a tela de login?")) {
+  if (confirm("Deseja desconectar sua conta e bloquear o acesso?")) {
     localStorage.removeItem("exames_auth");
     sessionStorage.removeItem("exames_auth");
-    document.getElementById("login-pass").value = "";
     const errorBox = document.getElementById("login-error");
     if (errorBox) errorBox.style.display = "none";
     
@@ -268,7 +246,7 @@ async function loadExams() {
   if (local) {
     try {
       examsData = JSON.parse(local);
-      examsData.casal = { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026", senha: "casal2026" };
+      examsData.casal = { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026" };
     } catch (e) {}
   }
 }
@@ -279,8 +257,7 @@ function saveToLocal() {
 
 // Configuração de Eventos
 function setupEventListeners() {
-  // Login e Logout
-  document.getElementById("form-login")?.addEventListener("submit", handleLogin);
+  // Logout
   document.getElementById("btn-logout")?.addEventListener("click", handleLogout);
 
   // Alternador de tema

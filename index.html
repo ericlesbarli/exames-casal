@@ -20,48 +20,24 @@
     <div class="login-card">
       <div class="login-badge">❤️‍🩹</div>
       <h2>Área Privada do Casal</h2>
-      <p class="login-subtitle">Acompanhamento de exames de Ericles & Rebeca</p>
+      <p class="login-subtitle">Acesso restrito para Ericles & Rebeca</p>
 
-      <!-- Botão Oficial do Google -->
+      <!-- Autenticação Exclusiva com o Google -->
       <div id="google-login-section">
         <div id="google-btn-wrapper">
           <div id="g_id_signin"></div>
         </div>
-        <div class="login-divider">
-          <span>ou entre com senha</span>
-        </div>
       </div>
-      
-      <form id="form-login">
-        <div class="form-group" style="text-align: left;">
-          <label for="login-user">Quem está acessando?</label>
-          <select id="login-user" required>
-            <option value="Ericles">👨 Ericles</option>
-            <option value="Rebeca">👩 Rebeca</option>
-          </select>
-        </div>
 
-        <div class="form-group" style="text-align: left;">
-          <label for="login-pass">Senha do Casal</label>
-          <input type="password" id="login-pass" placeholder="Digite a senha..." required autocomplete="current-password">
-        </div>
+      <div id="login-error" class="login-error" style="display: none;">
+        ⚠️ Acesso negado. Apenas Ericles e Rebeca podem entrar.
+      </div>
 
-        <div class="form-group" style="text-align: left;">
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
-            <input type="checkbox" id="login-remember" checked style="width: 16px; height: 16px; accent-color: var(--primary);">
-            <span>Lembrar neste aparelho</span>
-          </label>
-        </div>
-
-        <div id="login-error" class="login-error" style="display: none;">
-          ⚠️ Senha incorreta. Tente novamente!
-        </div>
-
-        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 12px;">
-          🔓 Entrar na Missão
-        </button>
-      </form>
-      <p class="login-hint">Senha padrão: <code>casal2026</code></p>
+      <p class="login-hint" style="margin-top: 22px; line-height: 1.5;">
+        🔒 Acesso seguro exclusivo para:<br>
+        <strong>ericlesbarli@gmail.com</strong><br>
+        <strong>rebecacoelho09@gmail.com</strong>
+      </p>
     </div>
   </div>
 
