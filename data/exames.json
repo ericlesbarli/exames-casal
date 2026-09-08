@@ -3,7 +3,11 @@
     "ele": "Ericles",
     "ela": "Rebeca",
     "meta": "Check-up & Saúde 2026",
-    "senha": "casal2026"
+    "senha": "casal2026",
+    "googleClientId": "",
+    "emailsAutorizados": [
+      "ericlesbarli@gmail.com"
+    ]
   },
   "exames": []
 }
