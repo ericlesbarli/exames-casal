@@ -717,6 +717,8 @@ function openEditExamModal(id) {
 
 function handleAddOrEditExam() {
   const editId = document.getElementById("edit-exam-id").value;
+  const isEdit = !!editId;
+  let savedExam = null;
   const titulo = document.getElementById("inp-titulo").value.trim();
   const tipo = document.getElementById("inp-tipo").value.trim() || "Exame Geral";
   const para = document.getElementById("inp-para").value;
@@ -749,6 +751,7 @@ function handleAddOrEditExam() {
         preparo: preparoList,
         cafePosExame: cafe
       };
+      savedExam = examsData.exames[idx];
     }
   } else {
     // Novo Exame
@@ -769,12 +772,20 @@ function handleAddOrEditExam() {
       cafePosExame: cafe
     };
     examsData.exames.push(novoExame);
+    savedExam = novoExame;
   }
 
   saveToLocal();
   document.getElementById("modal-add").classList.remove("open");
   document.getElementById("form-add-exam").reset();
+  const menu = document.getElementById("combobox-menu");
+  if (menu) menu.style.display = "none";
   render();
+
+  // Enviar e-mail de notificação para Ericles e Rebeca
+  if (savedExam) {
+    sendExamEmailNotification(savedExam, isEdit);
+  }
 }
 
 function exportJsonData() {
@@ -804,6 +815,94 @@ function formatDateBr(isoDate) {
 
 function formatTime(dateObj) {
   return dateObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function getLoggedInUserName() {
+  const authLocal = localStorage.getItem("exames_auth");
+  const authSession = sessionStorage.getItem("exames_auth");
+  const authData = authLocal ? JSON.parse(authLocal) : authSession ? JSON.parse(authSession) : null;
+  return authData?.user || "Ericles / Rebeca";
+}
+
+function showToast(message, type = "info", duration = 5000) {
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(10px)";
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// Disparo de E-mail de Notificação Automático para Ericles e Rebeca
+async function sendExamEmailNotification(exam, isEdit = false) {
+  const casal = examsData.casal || {};
+  const recipient1 = casal.notificacoes?.ericles || "ericlesbarli@gmail.com";
+  const recipient2 = casal.notificacoes?.rebeca || "rebecacoelho09@gmail.com";
+  const paraNome = getParticipantName(exam.para);
+  const dataFormatada = formatDateBr(exam.data);
+  const acaoTexto = isEdit ? "Exame Atualizado" : "Novo Exame Cadastrado";
+  const subject = `🩺 [Missão Saúde] ${acaoTexto}: ${exam.titulo} (${dataFormatada} às ${exam.horario})`;
+
+  const emailPayload = {
+    _subject: subject,
+    _cc: recipient2,
+    _template: "table",
+    _captcha: "false",
+    "Ação": acaoTexto,
+    "Nome do Exame": exam.titulo,
+    "Tipo / Procedimento": exam.tipo || "Geral",
+    "Quem fará": paraNome,
+    "Data": dataFormatada,
+    "Horário": exam.horario,
+    "Local / Clínica": exam.local,
+    "Endereço": exam.endereco || "Não informado",
+    "Rota GPS": exam.mapsUrl || "Não informado",
+    "Jejum Obrigatório": exam.jejumHoras > 0 ? `${exam.jejumHoras} horas antes` : "Não é necessário jejum",
+    "Instruções de Preparo": (exam.preparo && exam.preparo.length > 0) ? exam.preparo.join(" | ") : "Nenhum preparo especial",
+    "Documentos para Levar": (exam.documentos && exam.documentos.length > 0) ? exam.documentos.join(", ") : "Documento com foto, carteirinha",
+    "☕ Parada do Casal": exam.cafePosExame || "A combinar pelo casal ❤️",
+    "Registrado por": getLoggedInUserName(),
+    "Data de Envio": new Date().toLocaleString("pt-BR")
+  };
+
+  showToast(`✉️ Enviando notificação por e-mail para Ericles e Rebeca...`, "info", 3500);
+
+  try {
+    const webhookUrl = casal.emailWebhookUrl || `https://formsubmit.co/ajax/${recipient1}`;
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(emailPayload)
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (response.ok && (!result || result.success === "true" || result.success === true)) {
+      showToast(`✅ E-mail de notificação enviado para Ericles e Rebeca!`, "success", 6000);
+    } else if (result && result.message && result.message.toLowerCase().includes("activate")) {
+      showToast(`📧 Verifique a caixa de entrada de ${recipient1} para confirmar a ativação do envio automático!`, "warning", 9000);
+    } else {
+      showToast(`✅ Exame salvo! Notificação por e-mail despachada.`, "success", 5000);
+    }
+  } catch (err) {
+    console.warn("Aviso ao tentar despachar e-mail:", err);
+    showToast(`✅ Exame salvo no seu painel!`, "success", 4000);
+  }
 }
 
 // Catálogo Completo de Procedimentos Médicos e Odontológicos

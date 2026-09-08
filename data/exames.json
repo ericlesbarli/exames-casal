@@ -11,7 +11,12 @@
     "usuarios": {
       "ericlesbarli@gmail.com": "Ericles",
       "rebecacoelho09@gmail.com": "Rebeca"
-    }
+    },
+    "notificacoes": {
+      "ericles": "ericlesbarli@gmail.com",
+      "rebeca": "rebecacoelho09@gmail.com"
+    },
+    "emailWebhookUrl": ""
   },
   "exames": []
 }
