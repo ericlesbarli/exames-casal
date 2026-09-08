@@ -97,7 +97,7 @@ function initGoogleAuth() {
       } else {
         const errorBox = document.getElementById("login-error");
         if (errorBox) {
-          errorBox.textContent = `Acesso negado para "${email}". Apenas ericlesbarli@gmail.com e rebecacoelho09@gmail.com podem entrar.`;
+          errorBox.textContent = `Acesso negado para "${email}". Apenas Ericles e Rebeca possuem permissão para entrar.`;
           errorBox.style.display = "block";
         }
       }
