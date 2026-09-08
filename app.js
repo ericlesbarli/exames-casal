@@ -1,6 +1,6 @@
 // Estado da Aplicação
 let examsData = {
-  casal: { ele: "Éricles", ela: "Namorada", meta: "Check-up & Saúde 2026" },
+  casal: { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026" },
   exames: []
 };
 
@@ -38,26 +38,37 @@ function updateThemeIcon(theme) {
 
 // Carregar Dados
 async function loadExams() {
-  // Tenta carregar do localStorage primeiro, se existir customização
+  try {
+    const res = await fetch("data/exames.json?v=" + Date.now());
+    if (res.ok) {
+      const remoteData = await res.json();
+      examsData.casal = remoteData.casal;
+      
+      const local = localStorage.getItem("exames_data");
+      if (local) {
+        try {
+          const parsed = JSON.parse(local);
+          examsData.exames = parsed.exames && parsed.exames.length > 0 ? parsed.exames : remoteData.exames;
+        } catch (e) {
+          examsData.exames = remoteData.exames;
+        }
+      } else {
+        examsData.exames = remoteData.exames;
+      }
+      saveToLocal();
+      return;
+    }
+  } catch (err) {
+    console.warn("Não foi possível carregar data/exames.json via fetch, usando fallback.", err);
+  }
+
+  // Fallback se fetch falhar
   const local = localStorage.getItem("exames_data");
   if (local) {
     try {
       examsData = JSON.parse(local);
-      return;
-    } catch (e) {
-      console.error("Erro lendo localStorage, carregando exames.json", e);
-    }
-  }
-
-  // Se não houver no local, carrega do arquivo data/exames.json
-  try {
-    const res = await fetch("data/exames.json");
-    if (res.ok) {
-      examsData = await res.json();
-      saveToLocal();
-    }
-  } catch (err) {
-    console.warn("Não foi possível carregar data/exames.json via fetch, usando fallback embutido.", err);
+      examsData.casal = { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026" };
+    } catch (e) {}
   }
 }
 
