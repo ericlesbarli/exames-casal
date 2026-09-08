@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Exames Casal">
+  <link rel="manifest" href="manifest.json">
+  <title>Missão Check-up & Saúde do Casal 🩺</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="logo-badge">❤️‍🩹</div>
+        <div class="header-titles">
+          <h1>Missão Saúde 2026</h1>
+          <p>Éricles & Namorada • Cuidando juntos</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-export" class="btn-icon" title="Exportar dados JSON para o GitHub">💾</button>
+        <button id="btn-theme" class="btn-icon" title="Alternar tema">🌙</button>
+      </div>
+    </header>
+
+    <!-- Card de Progresso Geral -->
+    <section class="progress-card">
+      <div class="progress-header">
+        <div class="progress-title">
+          <span>🎯</span>
+          <span>Progresso do Check-up</span>
+        </div>
+        <div class="progress-percent" id="progress-percent">0%</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-stats">
+        <span id="progress-count">Carregando exames...</span>
+        <span>Juntos até o fim! 💪</span>
+      </div>
+    </section>
+
+    <!-- Banner Dinâmico de Jejum e Próximo Exame -->
+    <div id="countdown-banner" class="countdown-banner" style="display: none;"></div>
+
+    <!-- Barra de Filtros de Visualização -->
+    <div class="filters-wrap">
+      <button class="filter-btn active" data-filter="todos">
+        <span>📋</span> Todos
+      </button>
+      <button class="filter-btn" data-filter="ambos">
+        <span>👫</span> Vamos Juntos
+      </button>
+      <button class="filter-btn" data-filter="ele">
+        <span>👨</span> Só Éricles
+      </button>
+      <button class="filter-btn" data-filter="ela">
+        <span>👩</span> Só Ela
+      </button>
+    </div>
+
+    <!-- Lista de Cartões de Exame -->
+    <main id="exam-list" class="exam-list">
+      <!-- Inserido dinamicamente pelo app.js -->
+    </main>
+  </div>
+
+  <!-- Barra Inferior de Ação Rápida -->
+  <div class="bottom-bar">
+    <button id="btn-open-add" class="btn-primary">
+      <span>➕</span> Adicionar Exame
+    </button>
+  </div>
+
+  <!-- Modal: Adicionar Novo Exame -->
+  <div class="modal-overlay" id="modal-add">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Adicionar Novo Exame</h3>
+        <button id="btn-close-modal" class="btn-icon" style="border:none; background:transparent;">✕</button>
+      </div>
+      <form id="form-add-exam">
+        <div class="form-group">
+          <label for="inp-titulo">Nome do Exame *</label>
+          <input type="text" id="inp-titulo" placeholder="Ex: Hemograma Completo, Ultrassom..." required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inp-tipo">Tipo de Exame</label>
+            <select id="inp-tipo">
+              <option value="Laboratorial">Laboratorial (Sangue/Urina)</option>
+              <option value="Imagem">Imagem (USG, Raio-X, Tomo)</option>
+              <option value="Cardiológico">Cardiológico (ECG, MAPA)</option>
+              <option value="Consulta">Consulta / Retorno</option>
+              <option value="Ginecológico">Ginecológico</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="inp-para">Quem fará o exame? *</label>
+            <select id="inp-para">
+              <option value="ambos">👫 Ambos (Vamos juntos)</option>
+              <option value="ele">👨 Só Éricles</option>
+              <option value="ela">👩 Só Namorada</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="inp-data">Data *</label>
+            <input type="date" id="inp-data" required>
+          </div>
+          <div class="form-group">
+            <label for="inp-horario">Horário *</label>
+            <input type="time" id="inp-horario" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inp-local">Local / Laboratório *</label>
+          <input type="text" id="inp-local" placeholder="Ex: Fleury, Delboni, Lavoisier..." required>
+        </div>
+
+        <div class="form-group">
+          <label for="inp-endereco">Endereço completo (para gerar GPS)</label>
+          <input type="text" id="inp-endereco" placeholder="Ex: Av. Paulista, 1000 - Bela Vista">
+        </div>
+
+        <div class="form-group">
+          <label for="inp-jejum">Horas de Jejum obrigatório (0 se não tiver)</label>
+          <input type="number" id="inp-jejum" value="0" min="0" max="24">
+        </div>
+
+        <div class="form-group">
+          <label for="inp-preparo">Instruções de Preparo (uma por linha)</label>
+          <textarea id="inp-preparo" rows="3" placeholder="Jejum de 8h&#10;Beber 1L de água 1h antes&#10;Evitar café"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="inp-cafe">☕ Onde tomaremos café depois?</label>
+          <input type="text" id="inp-cafe" placeholder="Ex: Padaria da esquina ou cafeteria charmosa">
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Salvar Exame</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

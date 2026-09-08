@@ -1,0 +1,6 @@
+# Arquivos temporários e logs
+preview_email.html
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
