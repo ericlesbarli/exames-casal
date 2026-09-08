@@ -122,27 +122,26 @@
           <input type="text" id="inp-titulo" placeholder="Ex: Hemograma Completo, Ultrassom..." required>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="inp-tipo">Tipo de Exame</label>
-            <select id="inp-tipo">
-              <option value="Laboratorial">Laboratorial (Sangue/Urina)</option>
-              <option value="Imagem">Imagem (USG, Raio-X, Tomo)</option>
-              <option value="Cardiológico">Cardiológico (ECG, MAPA)</option>
-              <option value="Consulta">Consulta / Retorno</option>
-              <option value="Ginecológico">Ginecológico</option>
-              <option value="Outro">Outro</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label for="inp-para">Quem fará o exame? *</label>
+          <select id="inp-para">
+            <option value="ambos">👫 Ambos (Vamos juntos)</option>
+            <option value="ele">👨 Só Ericles</option>
+            <option value="ela">👩 Só Rebeca</option>
+          </select>
+        </div>
 
-          <div class="form-group">
-            <label for="inp-para">Quem fará o exame? *</label>
-            <select id="inp-para">
-              <option value="ambos">👫 Ambos (Vamos juntos)</option>
-              <option value="ele">👨 Só Ericles</option>
-              <option value="ela">👩 Só Rebeca</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label for="inp-tipo">Tipo de Exame</label>
+          <select id="inp-tipo">
+            <option value="Laboratorial">🧪 Laboratorial (Sangue, Urina, Fezes)</option>
+            <option value="Imagem">🖼️ Imagem (Ultrassom, Raio-X, Tomografia, Ressonância)</option>
+            <option value="Cardiológico">❤️ Cardiológico (ECG, Holter, MAPA, Teste de Esforço)</option>
+            <option value="Consulta">🩺 Consulta / Retorno Médico</option>
+            <option value="Ginecológico">🌸 Ginecológico / Preventivo</option>
+            <option value="Oftalmológico">👁️ Oftalmológico</option>
+            <option value="Outro">🩹 Outro tipo</option>
+          </select>
         </div>
 
         <div class="form-row">
