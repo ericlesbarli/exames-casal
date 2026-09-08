@@ -47,88 +47,84 @@ function checkAuth() {
 }
 
 // Inicializa o Google Identity Services
-// Mapeamento e Validação de Usuários Autorizados
-function getUserFromEmail(email) {
-  const cleanEmail = (email || "").toLowerCase().trim();
-  if (cleanEmail === "rebecacoelho09@gmail.com") return "Rebeca";
-  if (cleanEmail === "ericlesbarli@gmail.com") return "Ericles";
-  
-  // Verifica também lista dinâmica se houver
-  const dynamicMap = (examsData.casal && examsData.casal.usuarios) || {};
-  if (dynamicMap[cleanEmail]) return dynamicMap[cleanEmail];
-  
+// // Mapeamento e Validação de Usuários Autorizados
+function getUserFromInput(input) {
+  const clean = (input || "").toLowerCase().trim();
+  if (clean === "rebecacoelho09@gmail.com" || clean === "rebeca") {
+    return { name: "Rebeca", email: "rebecacoelho09@gmail.com" };
+  }
+  if (clean === "ericlesbarli@gmail.com" || clean === "ericles") {
+    return { name: "Ericles", email: "ericlesbarli@gmail.com" };
+  }
   return null;
 }
+
+// Senhas personalizáveis dos usuários
+function getUserPassword(userName) {
+  const saved = localStorage.getItem(`pass_${userName.toLowerCase()}`);
+  return saved || "casal2026"; // Senha padrão inicial se não tiver alterado
+}
+
+function setUserPassword(userName, newPass) {
+  localStorage.setItem(`pass_${userName.toLowerCase()}`, newPass);
+}
+
+// Token de recuperação temporário
+let currentResetToken = null;
 
 // Inicializa o Google Identity Services
 function initGoogleAuth() {
   const clientId = (examsData.casal && examsData.casal.googleClientId) || "";
-  const container = document.getElementById("g_id_signin");
-  if (!container) return;
+  const googleBtn = document.getElementById("btn-google-action");
+  const forgotGoogleBtn = document.getElementById("btn-forgot-google");
 
-  if (!clientId) {
-    // Botão amigável com autenticação direta para os e-mails autorizados
-    container.innerHTML = `
-      <button type="button" id="btn-google-setup" style="display: inline-flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--border); color: #374151; font-weight: 600; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 2px 5px rgba(0,0,0,0.08); width: 100%; justify-content: center; transition: all 0.2s;">
-        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-        <span>Entrar com Conta Google (Gmail)</span>
-      </button>
-    `;
-
-    document.getElementById("btn-google-setup")?.addEventListener("click", () => {
-      const emailInput = prompt("Digite ou confirme o seu e-mail do Gmail cadastrado:", "");
+  const triggerGoogleLogin = () => {
+    if (clientId && window.google && window.google.accounts) {
+      window.google.accounts.id.prompt();
+    } else {
+      // Login rápido direto pelo e-mail
+      const emailInput = prompt("Digite o seu e-mail do Gmail cadastrado:", "");
       if (!emailInput) return;
 
-      const email = emailInput.trim().toLowerCase();
-      const userName = getUserFromEmail(email);
-
-      if (userName) {
+      const userObj = getUserFromInput(emailInput);
+      if (userObj) {
         const authData = {
-          user: userName,
-          email: email,
-          picture: `https://api.dicebear.com/7.x/initials/svg?seed=${userName}&backgroundColor=0284c7`,
+          user: userObj.name,
+          email: userObj.email,
+          picture: `https://api.dicebear.com/7.x/initials/svg?seed=${userObj.name}&backgroundColor=0284c7`,
           type: "google",
           loggedAt: Date.now()
         };
         localStorage.setItem("exames_auth", JSON.stringify(authData));
         document.getElementById("login-overlay").style.display = "none";
+        document.getElementById("modal-forgot")?.classList.remove("open");
         checkAuth();
         render();
       } else {
-        const errorBox = document.getElementById("login-error");
-        if (errorBox) {
-          errorBox.textContent = `Acesso negado para "${email}". Apenas Ericles e Rebeca possuem permissão para entrar.`;
-          errorBox.style.display = "block";
-        }
-      }
-    });
-    return;
-  }
-
-  // Se tiver Client ID configurado, inicializa o widget oficial do Google
-  const interval = setInterval(() => {
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      clearInterval(interval);
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredentialResponse,
-          auto_select: false
-        });
-        window.google.accounts.id.renderButton(container, {
-          theme: "outline",
-          size: "large",
-          type: "standard",
-          text: "continue_with",
-          shape: "pill",
-          logo_alignment: "left",
-          width: 280
-        });
-      } catch (err) {
-        console.error("Erro ao inicializar Google Identity Services:", err);
+        alert("Acesso negado. Apenas Ericles e Rebeca podem entrar.");
       }
     }
-  }, 300);
+  };
+
+  googleBtn?.addEventListener("click", triggerGoogleLogin);
+  forgotGoogleBtn?.addEventListener("click", triggerGoogleLogin);
+
+  if (clientId) {
+    const interval = setInterval(() => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        clearInterval(interval);
+        try {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleGoogleCredentialResponse,
+            auto_select: false
+          });
+        } catch (err) {
+          console.error("Erro ao inicializar Google Identity Services:", err);
+        }
+      }
+    }, 300);
+  }
 }
 
 // Resposta do Google OAuth
@@ -136,13 +132,13 @@ function handleGoogleCredentialResponse(response) {
   try {
     const payload = parseJwt(response.credential);
     const email = (payload.email || "").toLowerCase().trim();
-    const userName = getUserFromEmail(email);
+    const userObj = getUserFromInput(email);
 
-    if (userName) {
+    if (userObj) {
       const authData = {
-        user: userName,
-        email: email,
-        picture: payload.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${userName}&backgroundColor=0284c7`,
+        user: userObj.name,
+        email: userObj.email,
+        picture: payload.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${userObj.name}&backgroundColor=0284c7`,
         type: "google",
         loggedAt: Date.now()
       };
@@ -170,6 +166,114 @@ function parseJwt(token) {
     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
   }).join(''));
   return JSON.parse(jsonPayload);
+}
+
+// Login Estilo GitHub (Formulário)
+function handleGithubLogin(e) {
+  e.preventDefault();
+  const inputUser = document.getElementById("login-username").value;
+  const inputPass = document.getElementById("login-password").value;
+  const errorBox = document.getElementById("login-error");
+
+  const userObj = getUserFromInput(inputUser);
+
+  if (!userObj) {
+    if (errorBox) {
+      errorBox.textContent = "Incorrect username or email address.";
+      errorBox.style.display = "block";
+    }
+    return;
+  }
+
+  const expectedPass = getUserPassword(userObj.name);
+
+  if (inputPass === expectedPass) {
+    const authData = {
+      user: userObj.name,
+      email: userObj.email,
+      picture: `https://api.dicebear.com/7.x/initials/svg?seed=${userObj.name}&backgroundColor=0284c7`,
+      type: "password",
+      loggedAt: Date.now()
+    };
+    localStorage.setItem("exames_auth", JSON.stringify(authData));
+    if (errorBox) errorBox.style.display = "none";
+    document.getElementById("login-overlay").style.display = "none";
+    checkAuth();
+    render();
+  } else {
+    if (errorBox) {
+      errorBox.innerHTML = `Incorrect password. <a href="#" onclick="openForgotModal(); return false;" style="color:#0969da; text-decoration:underline;">Esqueceu a senha?</a>`;
+      errorBox.style.display = "block";
+    }
+  }
+}
+
+// Fluxo de Recuperação por Token
+function openForgotModal() {
+  const modal = document.getElementById("modal-forgot");
+  if (!modal) return;
+  document.getElementById("forgot-step-1").style.display = "block";
+  document.getElementById("forgot-step-2").style.display = "none";
+  document.getElementById("inp-forgot-email").value = "";
+  modal.classList.add("open");
+}
+
+function handleRequestToken() {
+  const email = document.getElementById("inp-forgot-email").value.trim().toLowerCase();
+  const userObj = getUserFromInput(email);
+
+  if (!userObj) {
+    alert("Este e-mail não está cadastrado. Apenas Ericles ou Rebeca podem solicitar.");
+    return;
+  }
+
+  // Gera token seguro aleatório de 6 dígitos
+  const token = Math.floor(100000 + Math.random() * 900000).toString();
+  currentResetToken = {
+    token: token,
+    userName: userObj.name,
+    email: userObj.email
+  };
+
+  document.getElementById("display-token").textContent = token;
+  document.getElementById("forgot-step-1").style.display = "none";
+  document.getElementById("forgot-step-2").style.display = "block";
+  document.getElementById("inp-verify-token").value = token; // Já auto-preenche para conveniência
+}
+
+function handleResetPassword(e) {
+  e.preventDefault();
+  const typedToken = document.getElementById("inp-verify-token").value.trim();
+  const newPass = document.getElementById("inp-new-password").value.trim();
+
+  if (!currentResetToken || typedToken !== currentResetToken.token) {
+    alert("Token inválido! Verifique o código digitado.");
+    return;
+  }
+
+  if (newPass.length < 3) {
+    alert("A nova senha deve ter pelo menos 3 caracteres.");
+    return;
+  }
+
+  // Salva a nova senha
+  setUserPassword(currentResetToken.userName, newPass);
+
+  // Faz login imediato
+  const authData = {
+    user: currentResetToken.userName,
+    email: currentResetToken.email,
+    picture: `https://api.dicebear.com/7.x/initials/svg?seed=${currentResetToken.userName}&backgroundColor=0284c7`,
+    type: "token_reset",
+    loggedAt: Date.now()
+  };
+  localStorage.setItem("exames_auth", JSON.stringify(authData));
+
+  alert(`Senha alterada com sucesso! Bem-vindo(a), ${currentResetToken.userName}!`);
+  document.getElementById("modal-forgot").classList.remove("open");
+  document.getElementById("login-overlay").style.display = "none";
+  checkAuth();
+  render();
 }
 
 function handleLogout() {
@@ -257,6 +361,18 @@ function saveToLocal() {
 
 // Configuração de Eventos
 function setupEventListeners() {
+  // Login e Recuperação de Senha Estilo GitHub
+  document.getElementById("form-github-login")?.addEventListener("submit", handleGithubLogin);
+  document.getElementById("link-forgot-pass")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openForgotModal();
+  });
+  document.getElementById("btn-close-forgot")?.addEventListener("click", () => {
+    document.getElementById("modal-forgot")?.classList.remove("open");
+  });
+  document.getElementById("btn-request-token")?.addEventListener("click", handleRequestToken);
+  document.getElementById("form-reset-password")?.addEventListener("submit", handleResetPassword);
+
   // Logout
   document.getElementById("btn-logout")?.addEventListener("click", handleLogout);
 
