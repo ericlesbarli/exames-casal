@@ -1,6 +1,6 @@
 // Estado da Aplicação
 let examsData = {
-  casal: { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026" },
+  casal: { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026", senha: "casal2026" },
   exames: []
 };
 
@@ -11,10 +11,66 @@ let checkedItems = JSON.parse(localStorage.getItem("exames_checklist") || "{}");
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   await loadExams();
+  checkAuth();
   setupEventListeners();
   render();
   setInterval(updateCountdowns, 60000); // Atualiza contadores a cada minuto
 });
+
+// Sistema de Login e Autenticação
+function checkAuth() {
+  const authLocal = localStorage.getItem("exames_auth");
+  const authSession = sessionStorage.getItem("exames_auth");
+  const overlay = document.getElementById("login-overlay");
+  const greeting = document.getElementById("user-greeting");
+
+  const authData = authLocal ? JSON.parse(authLocal) : authSession ? JSON.parse(authSession) : null;
+
+  if (authData && authData.user) {
+    if (overlay) overlay.style.display = "none";
+    if (greeting) greeting.textContent = `Olá, ${authData.user}!`;
+  } else {
+    if (overlay) overlay.style.display = "flex";
+  }
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const user = document.getElementById("login-user").value;
+  const pass = document.getElementById("login-pass").value.trim();
+  const remember = document.getElementById("login-remember").checked;
+  const errorBox = document.getElementById("login-error");
+
+  const correctPass = (examsData.casal && examsData.casal.senha) || "casal2026";
+
+  if (pass === correctPass) {
+    const authData = { user, loggedAt: Date.now() };
+    if (remember) {
+      localStorage.setItem("exames_auth", JSON.stringify(authData));
+    } else {
+      sessionStorage.setItem("exames_auth", JSON.stringify(authData));
+    }
+
+    if (errorBox) errorBox.style.display = "none";
+    document.getElementById("login-overlay").style.display = "none";
+    const greeting = document.getElementById("user-greeting");
+    if (greeting) greeting.textContent = `Olá, ${user}!`;
+    render();
+  } else {
+    if (errorBox) errorBox.style.display = "block";
+    document.getElementById("login-pass").focus();
+  }
+}
+
+function handleLogout() {
+  if (confirm("Deseja bloquear o acesso e voltar para a tela de login?")) {
+    localStorage.removeItem("exames_auth");
+    sessionStorage.removeItem("exames_auth");
+    document.getElementById("login-pass").value = "";
+    document.getElementById("login-error").style.display = "none";
+    document.getElementById("login-overlay").style.display = "flex";
+  }
+}
 
 // Gerenciamento de Tema (Claro / Escuro)
 function initTheme() {
@@ -48,12 +104,18 @@ async function loadExams() {
       if (local) {
         try {
           const parsed = JSON.parse(local);
-          examsData.exames = parsed.exames && parsed.exames.length > 0 ? parsed.exames : remoteData.exames;
+          // Se tiver exames locais válidos e não forem os de exemplo antigos (ex-001, etc)
+          const hasOldMocks = parsed.exames && parsed.exames.some(e => e.id === "ex-001" || e.id === "ex-002");
+          if (hasOldMocks) {
+            examsData.exames = remoteData.exames || [];
+          } else {
+            examsData.exames = parsed.exames || remoteData.exames || [];
+          }
         } catch (e) {
-          examsData.exames = remoteData.exames;
+          examsData.exames = remoteData.exames || [];
         }
       } else {
-        examsData.exames = remoteData.exames;
+        examsData.exames = remoteData.exames || [];
       }
       saveToLocal();
       return;
@@ -67,7 +129,7 @@ async function loadExams() {
   if (local) {
     try {
       examsData = JSON.parse(local);
-      examsData.casal = { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026" };
+      examsData.casal = { ele: "Ericles", ela: "Rebeca", meta: "Check-up & Saúde 2026", senha: "casal2026" };
     } catch (e) {}
   }
 }
@@ -78,6 +140,10 @@ function saveToLocal() {
 
 // Configuração de Eventos
 function setupEventListeners() {
+  // Login e Logout
+  document.getElementById("form-login")?.addEventListener("submit", handleLogin);
+  document.getElementById("btn-logout")?.addEventListener("click", handleLogout);
+
   // Alternador de tema
   document.getElementById("btn-theme")?.addEventListener("click", toggleTheme);
 
@@ -92,15 +158,21 @@ function setupEventListeners() {
     });
   });
 
-  // Modal Novo Exame
+  // Modal Novo / Editar Exame
   const modal = document.getElementById("modal-add");
-  document.getElementById("btn-open-add")?.addEventListener("click", () => modal.classList.add("open"));
+  document.getElementById("btn-open-add")?.addEventListener("click", () => {
+    document.getElementById("form-add-exam").reset();
+    document.getElementById("edit-exam-id").value = "";
+    document.getElementById("modal-title").textContent = "Adicionar Novo Exame";
+    modal.classList.add("open");
+  });
+
   document.getElementById("btn-close-modal")?.addEventListener("click", () => modal.classList.remove("open"));
 
-  // Formulário de Adicionar Exame
+  // Formulário de Adicionar/Editar Exame
   document.getElementById("form-add-exam")?.addEventListener("submit", (e) => {
     e.preventDefault();
-    handleAddExam();
+    handleAddOrEditExam();
   });
 
   // Exportar JSON para Git
@@ -117,14 +189,19 @@ function render() {
 // Barra de Progresso Compartilhada
 function renderProgress() {
   const total = examsData.exames.length;
-  if (total === 0) return;
-
-  const concluidos = examsData.exames.filter(ex => ex.status === "concluido" || ex.status === "realizado").length;
-  const percent = Math.round((concluidos / total) * 100);
-
   const bar = document.getElementById("progress-bar");
   const text = document.getElementById("progress-percent");
   const count = document.getElementById("progress-count");
+
+  if (total === 0) {
+    if (bar) bar.style.width = "0%";
+    if (text) text.textContent = "0%";
+    if (count) count.textContent = "0 exames cadastrados";
+    return;
+  }
+
+  const concluidos = examsData.exames.filter(ex => ex.status === "concluido" || ex.status === "realizado").length;
+  const percent = Math.round((concluidos / total) * 100);
 
   if (bar) bar.style.width = `${percent}%`;
   if (text) text.textContent = `${percent}%`;
@@ -143,7 +220,7 @@ function renderFastingBanner() {
       const dt = new Date(`${ex.data}T${ex.horario}`);
       return { ...ex, dateTime: dt };
     })
-    .filter(ex => ex.dateTime > now)
+    .filter(ex => !isNaN(ex.dateTime.getTime()) && ex.dateTime > now)
     .sort((a, b) => a.dateTime - b.dateTime);
 
   if (sortedUpcoming.length === 0) {
@@ -161,7 +238,6 @@ function renderFastingBanner() {
     banner.style.display = "flex";
 
     if (diffMs > 0) {
-      // Jejum vai começar em breve
       const hours = Math.floor(diffMs / (1000 * 60 * 60));
       const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       banner.innerHTML = `
@@ -172,7 +248,6 @@ function renderFastingBanner() {
         </div>
       `;
     } else {
-      // Já está no período de jejum!
       banner.innerHTML = `
         <div class="countdown-icon">⚠️</div>
         <div class="countdown-info">
@@ -182,7 +257,6 @@ function renderFastingBanner() {
       `;
     }
   } else {
-    // Sem jejum obrigatório, apenas aviso do próximo exame
     banner.style.display = "flex";
     banner.innerHTML = `
       <div class="countdown-icon">📅</div>
@@ -202,6 +276,17 @@ function updateCountdowns() {
 function renderExamList() {
   const container = document.getElementById("exam-list");
   if (!container) return;
+
+  if (examsData.exames.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🩺</div>
+        <h3>Nenhum exame cadastrado ainda</h3>
+        <p>A lista está limpinha! Clique no botão <strong>➕ Adicionar Exame</strong> abaixo para cadastrar o primeiro exame de vocês.</p>
+      </div>
+    `;
+    return;
+  }
 
   const filtered = examsData.exames.filter(ex => {
     if (currentFilter === "todos") return true;
@@ -235,6 +320,22 @@ function renderExamList() {
       checkedItems[key] = e.target.checked;
       localStorage.setItem("exames_checklist", JSON.stringify(checkedItems));
       e.target.closest(".checklist-item").classList.toggle("checked", e.target.checked);
+    });
+  });
+
+  // Botões de Excluir
+  container.querySelectorAll(".btn-delete-exam").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const id = e.currentTarget.getAttribute("data-id");
+      deleteExam(id);
+    });
+  });
+
+  // Botões de Editar
+  container.querySelectorAll(".btn-edit-exam").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const id = e.currentTarget.getAttribute("data-id");
+      openEditExamModal(id);
     });
   });
 }
@@ -277,6 +378,14 @@ function createExamCardHtml(ex) {
             ${ex.jejumHoras > 0 ? `<span class="badge" style="background:#fef3c7; color:#b45309;">⚠️ Jejum ${ex.jejumHoras}h</span>` : ''}
           </div>
         </div>
+        
+        <div class="card-header-actions">
+          <button class="btn-card-action btn-edit-exam" data-id="${ex.id}" title="Editar Exame">✏️</button>
+          <button class="btn-card-action delete btn-delete-exam" data-id="${ex.id}" title="Apagar Exame">🗑️</button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
         <select class="status-dropdown" data-id="${ex.id}">
           <option value="agendado" ${ex.status === 'agendado' ? 'selected' : ''}>🗓️ Agendado</option>
           <option value="realizado" ${ex.status === 'realizado' ? 'selected' : ''}>💉 Realizado</option>
@@ -301,16 +410,18 @@ function createExamCardHtml(ex) {
         ` : ''}
       </div>
 
-      <details class="details-box">
-        <summary>
-          <span>Instruções de Preparo e Documentos</span>
-          <span>▾</span>
-        </summary>
-        <div class="details-content">
-          ${preparosHtml}
-          ${docsHtml}
-        </div>
-      </details>
+      ${(ex.preparo && ex.preparo.length > 0) || (ex.documentos && ex.documentos.length > 0) ? `
+        <details class="details-box">
+          <summary>
+            <span>Instruções de Preparo e Documentos</span>
+            <span>▾</span>
+          </summary>
+          <div class="details-content">
+            ${preparosHtml}
+            ${docsHtml}
+          </div>
+        </details>
+      ` : ''}
 
       ${ex.cafePosExame ? `
         <div class="cafe-box">
@@ -333,7 +444,38 @@ function updateExamStatus(id, newStatus) {
   }
 }
 
-function handleAddExam() {
+function deleteExam(id) {
+  const item = examsData.exames.find(e => e.id === id);
+  const title = item ? item.titulo : "este exame";
+  if (confirm(`Deseja realmente apagar "${title}"?`)) {
+    examsData.exames = examsData.exames.filter(e => e.id !== id);
+    saveToLocal();
+    render();
+  }
+}
+
+function openEditExamModal(id) {
+  const ex = examsData.exames.find(e => e.id === id);
+  if (!ex) return;
+
+  document.getElementById("edit-exam-id").value = ex.id;
+  document.getElementById("modal-title").textContent = "Editar Exame";
+  document.getElementById("inp-titulo").value = ex.titulo;
+  document.getElementById("inp-tipo").value = ex.tipo || "Laboratorial";
+  document.getElementById("inp-para").value = ex.para || "ambos";
+  document.getElementById("inp-data").value = ex.data || "";
+  document.getElementById("inp-horario").value = ex.horario || "";
+  document.getElementById("inp-local").value = ex.local || "";
+  document.getElementById("inp-endereco").value = ex.endereco || "";
+  document.getElementById("inp-jejum").value = ex.jejumHoras || 0;
+  document.getElementById("inp-preparo").value = (ex.preparo || []).join("\n");
+  document.getElementById("inp-cafe").value = ex.cafePosExame || "";
+
+  document.getElementById("modal-add").classList.add("open");
+}
+
+function handleAddOrEditExam() {
+  const editId = document.getElementById("edit-exam-id").value;
   const titulo = document.getElementById("inp-titulo").value.trim();
   const tipo = document.getElementById("inp-tipo").value;
   const para = document.getElementById("inp-para").value;
@@ -345,24 +487,49 @@ function handleAddExam() {
   const preparoRaw = document.getElementById("inp-preparo").value.trim();
   const cafe = document.getElementById("inp-cafe").value.trim();
 
-  const novoExame = {
-    id: `ex-${Date.now().toString().slice(-4)}`,
-    titulo,
-    tipo,
-    para,
-    data,
-    horario,
-    local,
-    endereco,
-    mapsUrl: endereco ? `https://maps.google.com/?q=${encodeURIComponent(local + ' ' + endereco)}` : '',
-    status: "agendado",
-    jejumHoras,
-    preparo: preparoRaw ? preparoRaw.split("\n").filter(Boolean) : [],
-    documentos: ["Documento com foto", "Carteirinha do convênio", "Pedido médico"],
-    cafePosExame: cafe
-  };
+  const mapsUrl = endereco ? `https://maps.google.com/?q=${encodeURIComponent(local + ' ' + endereco)}` : '';
+  const preparoList = preparoRaw ? preparoRaw.split("\n").filter(Boolean) : [];
 
-  examsData.exames.push(novoExame);
+  if (editId) {
+    // Modo Edição
+    const idx = examsData.exames.findIndex(e => e.id === editId);
+    if (idx !== -1) {
+      examsData.exames[idx] = {
+        ...examsData.exames[idx],
+        titulo,
+        tipo,
+        para,
+        data,
+        horario,
+        local,
+        endereco,
+        mapsUrl,
+        jejumHoras,
+        preparo: preparoList,
+        cafePosExame: cafe
+      };
+    }
+  } else {
+    // Novo Exame
+    const novoExame = {
+      id: `ex-${Date.now().toString().slice(-4)}`,
+      titulo,
+      tipo,
+      para,
+      data,
+      horario,
+      local,
+      endereco,
+      mapsUrl,
+      status: "agendado",
+      jejumHoras,
+      preparo: preparoList,
+      documentos: ["Documento com foto", "Carteirinha do convênio", "Pedido médico"],
+      cafePosExame: cafe
+    };
+    examsData.exames.push(novoExame);
+  }
+
   saveToLocal();
   document.getElementById("modal-add").classList.remove("open");
   document.getElementById("form-add-exam").reset();

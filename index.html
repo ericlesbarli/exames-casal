@@ -8,24 +8,65 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Exames Casal">
   <link rel="manifest" href="manifest.json">
-  <title>Missão Check-up & Saúde do Casal 🩺</title>
+  <title>Missão Check-up & Saúde • Ericles & Rebeca 🩺</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="container">
+  <!-- Tela de Login / Bloqueio Privado do Casal -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-badge">❤️‍🩹</div>
+      <h2>Área Privada do Casal</h2>
+      <p class="login-subtitle">Acompanhamento de exames de Ericles & Rebeca</p>
+      
+      <form id="form-login">
+        <div class="form-group" style="text-align: left;">
+          <label for="login-user">Quem está acessando?</label>
+          <select id="login-user" required>
+            <option value="Ericles">👨 Ericles</option>
+            <option value="Rebeca">👩 Rebeca</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="text-align: left;">
+          <label for="login-pass">Senha do Casal</label>
+          <input type="password" id="login-pass" placeholder="Digite a senha..." required autocomplete="current-password">
+        </div>
+
+        <div class="form-group" style="text-align: left;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
+            <input type="checkbox" id="login-remember" checked style="width: 16px; height: 16px; accent-color: var(--primary);">
+            <span>Lembrar neste aparelho (não pedir senha de novo)</span>
+          </label>
+        </div>
+
+        <div id="login-error" class="login-error" style="display: none;">
+          ⚠️ Senha incorreta. Tente novamente!
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 12px;">
+          🔓 Entrar na Missão
+        </button>
+      </form>
+      <p class="login-hint">Senha padrão: <code>casal2026</code></p>
+    </div>
+  </div>
+
+  <div class="container" id="main-content">
     <!-- Header -->
     <header class="header">
       <div class="header-brand">
         <div class="logo-badge">❤️‍🩹</div>
         <div class="header-titles">
           <h1>Missão Saúde 2026</h1>
-          <p>Ericles & Rebeca • Cuidando juntos</p>
+          <p><span id="user-greeting">Ericles & Rebeca</span> • Cuidando juntos</p>
         </div>
       </div>
       <div class="header-actions">
         <button id="btn-export" class="btn-icon" title="Exportar dados JSON para o GitHub">💾</button>
-        <button id="btn-theme" class="btn-icon" title="Alternar tema">🌙</button>
+        <button id="btn-theme" class="btn-icon" title="Alternar tema claro/escuro">🌙</button>
+        <button id="btn-logout" class="btn-icon" title="Bloquear / Sair">🔒</button>
       </div>
     </header>
 
@@ -42,7 +83,7 @@
         <div class="progress-bar" id="progress-bar"></div>
       </div>
       <div class="progress-stats">
-        <span id="progress-count">Carregando exames...</span>
+        <span id="progress-count">0 exames cadastrados</span>
         <span>Juntos até o fim! 💪</span>
       </div>
     </section>
@@ -79,14 +120,16 @@
     </button>
   </div>
 
-  <!-- Modal: Adicionar Novo Exame -->
+  <!-- Modal: Adicionar / Editar Exame -->
   <div class="modal-overlay" id="modal-add">
     <div class="modal">
       <div class="modal-header">
-        <h3>Adicionar Novo Exame</h3>
+        <h3 id="modal-title">Adicionar Novo Exame</h3>
         <button id="btn-close-modal" class="btn-icon" style="border:none; background:transparent;">✕</button>
       </div>
       <form id="form-add-exam">
+        <input type="hidden" id="edit-exam-id" value="">
+
         <div class="form-group">
           <label for="inp-titulo">Nome do Exame *</label>
           <input type="text" id="inp-titulo" placeholder="Ex: Hemograma Completo, Ultrassom..." required>
@@ -132,7 +175,7 @@
         </div>
 
         <div class="form-group">
-          <label for="inp-endereco">Endereço completo (para gerar GPS)</label>
+          <label for="inp-endereco">Endereço completo (para gerar rota no GPS)</label>
           <input type="text" id="inp-endereco" placeholder="Ex: Av. Paulista, 1000 - Bela Vista">
         </div>
 
